@@ -54,7 +54,7 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
             if (bd.getConstructorArgs() == null) {
                 return bd.getBeanType().getConstructor().newInstance();
             } else {
-                List<Object> realArgs = getRealValueForConstructorArgs(bd.getConstructorArgs());
+                Object[] realArgs = getRealValueForConstructorArgs(bd.getConstructorArgs());
                 //创建对象
                 return determineConstructor(bd, realArgs).newInstance(realArgs);
             }
@@ -70,7 +70,7 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
         return null;
     }
 
-    private Constructor determineConstructor(BeanDefinition bd, List<Object> realArgs) {
+    private Constructor determineConstructor(BeanDefinition bd, Object[] realArgs) {
 
         if (realArgs == null) {
             try {
@@ -115,28 +115,29 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
         return constructor;
     }
 
-    private Class[] getRealArgTypes(List<Object> realArgs) {
+    private Class[] getRealArgTypes(Object[] realArgs) {
         if (realArgs == null) {
             return null;
         }
 
-        Class[] argTypes = new Class[realArgs.size()];
-        for (int i = 0; i < realArgs.size(); i++) {
-            argTypes[i] = realArgs.get(i).getClass();
+        Class[] argTypes = new Class[realArgs.length];
+        for (int i = 0; i < realArgs.length; i++) {
+            argTypes[i] = realArgs[i].getClass();
         }
         return argTypes;
     }
 
-    private List<Object> getRealValueForConstructorArgs(List<Object> constructorArgs) {
+    private Object[] getRealValueForConstructorArgs(List<Object> constructorArgs) {
 
         if (constructorArgs == null) {
             return null;
         }
 
-        List<Object> realValues = new ArrayList<>();
+        Object[] realValues = new Object[constructorArgs.size()];
 
         Object realValue = null;
-        for (Object arg : constructorArgs) {
+        for(int i=0;i<constructorArgs.size();i++){
+            Object arg = constructorArgs.get(i);
             if (arg == null) {
                 throw new IllegalArgumentException("构造参数不能为空！");
             }
@@ -148,8 +149,7 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
             } else {
                 realValue = arg;
             }
-
-            realValues.add(realValue);
+            realValues[i] = realValue;
         }
         return realValues;
     }
@@ -166,7 +166,7 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
 
             } else {
                 //找到真实的参数值
-                List<Object> realArgs = getRealValueForConstructorArgs(bd.getConstructorArgs());
+                Object[] realArgs = getRealValueForConstructorArgs(bd.getConstructorArgs());
 
                 //根据参数找到工厂方法
                 Method m = determineFactoryMethod(bd, bd.getBeanType(), realArgs);
@@ -182,7 +182,7 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
         return null;
     }
 
-    private Method determineFactoryMethod(BeanDefinition bd,Class<?> beanType, List<Object> realArgs) {
+    private Method determineFactoryMethod(BeanDefinition bd,Class<?> beanType, Object[] realArgs) {
         if(beanType==null){
             beanType = bd.getBeanType();
         }
@@ -232,7 +232,7 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
                 return factoryBean.getClass().getMethod(bd.getFactoryMethodName()).invoke(factoryBean);
 
             } else {
-                List<Object> realArgs = getRealValueForConstructorArgs(bd.getConstructorArgs());
+                Object[] realArgs = getRealValueForConstructorArgs(bd.getConstructorArgs());
                 Method m = determineFactoryMethod(bd,factoryBean.getClass(), realArgs);
                 return m.invoke(factoryBean);
             }
