@@ -1,4 +1,4 @@
-package ioc.bean;
+package ioc.bean.constructor;
 
 public class CarBean {
 

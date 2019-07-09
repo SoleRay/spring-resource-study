@@ -1,8 +1,12 @@
-package ioc.bean;
+package ioc.bean.constructor;
 
 public class WheelBean {
 
     private String name;
+
+    public WheelBean(){
+
+    }
 
     public WheelBean(String name) {
         this.name = name;

@@ -1,11 +1,14 @@
 package factory;
 
+import utils.ClassUtils;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
@@ -14,24 +17,42 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
 
     private ConcurrentHashMap<String, Object> beanMap = new ConcurrentHashMap<>();
 
-    public Object getBean(String beanName) {
-        Object bean = beanMap.get(beanName);
-        if (bean == null) {
-            bean = doCreateBean(beanName);
-        }
+    private ThreadLocal<Set<String>> buildingBeans = new ThreadLocal<>();
 
-        return bean;
+    public DefaultBeanFactory() {
+        HashSet<String> buildingBeanSet = new HashSet<>();
+        buildingBeans.set(buildingBeanSet);
     }
 
-    private Object doCreateBean(String beanName) {
-        Object bean = null;
+    public Object getBean(String beanName) {
 
+        return doGetBean(beanName);
+
+    }
+
+    private Object doGetBean(String beanName) {
         BeanDefinition bd = beanDefinitionMap.get(beanName);
-
         if (bd == null) {
             return null;
         }
 
+        if(bd.getScope()==BeanDefinition.SCOPE_SINGLETON){
+            Object bean = beanMap.get(bd);
+
+            if(bean!=null){
+                return bean;
+            }else {
+                return this.doCreateBean(bd);
+            }
+        }else {
+            return this.doCreateBean(bd);
+        }
+    }
+
+    private Object doCreateBean(BeanDefinition bd) {
+        Object bean = null;
+
+        buildingBeans.get().add(bd.getBeanName());
 
         if (bd.getFactoryMethodName() == null) {
             bean = createInstanceByConstructor(bd);
@@ -43,6 +64,8 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
                 bean = createInstanceByBeanFactory(bd);
             }
         }
+
+        buildingBeans.get().remove(bd.getBeanName());
 
         return bean;
     }
@@ -66,11 +89,17 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
             e.printStackTrace();
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return null;
     }
 
     private Constructor determineConstructor(BeanDefinition bd, Object[] realArgs) {
+
+        if(bd.getConstructor()!=null){
+            return bd.getConstructor();
+        }
 
         if (realArgs == null) {
             try {
@@ -112,6 +141,10 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
             }
 
         }
+        if(bd.getScope()==BeanDefinition.SCOPE_PROTOTYPE){
+            bd.setConstructor(constructor);
+        }
+
         return constructor;
     }
 
@@ -127,7 +160,7 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
         return argTypes;
     }
 
-    private Object[] getRealValueForConstructorArgs(List<Object> constructorArgs) {
+    private Object[] getRealValueForConstructorArgs(List<Object> constructorArgs) throws Exception {
 
         if (constructorArgs == null) {
             return null;
@@ -143,7 +176,11 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
             }
 
             if (arg instanceof BeanReference) {
-                realValue = getBean(((BeanReference) arg).getBeanName());
+                String beanName = ((BeanReference) arg).getBeanName();
+                if(buildingBeans.get().contains(beanName)){
+                    throw new Exception("loop dependency...");
+                }
+                realValue = getBean(beanName);
             } else if (arg instanceof Map) {
             } else if (arg instanceof List) {
             } else {
@@ -170,7 +207,7 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
 
                 //根据参数找到工厂方法
                 Method m = determineFactoryMethod(bd, bd.getBeanType(), realArgs);
-                return m.invoke(beanType);
+                return m.invoke(beanType,realArgs);
             }
         } catch (IllegalAccessException e) {
             e.printStackTrace();
@@ -178,11 +215,25 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
             e.printStackTrace();
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return null;
     }
 
+    /**
+     *
+     * @param bd ——要创建对象的BeanDefinition
+     * @param beanType ——工厂方法所在的类Class
+     * @param realArgs ——构造方法所需要的真实参数
+     * @return
+     */
     private Method determineFactoryMethod(BeanDefinition bd,Class<?> beanType, Object[] realArgs) {
+
+        if(bd.getFactoryMethod()!=null){
+            return bd.getFactoryMethod();
+        }
+
         if(beanType==null){
             beanType = bd.getBeanType();
         }
@@ -193,7 +244,7 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
         try {
             method = beanType.getMethod(bd.getFactoryMethodName(), argTypes);
         } catch (NoSuchMethodException e) {
-            e.printStackTrace();
+            System.out.println("can't find such method directly...will list all to match...");
         }
 
         if (method == null) {
@@ -209,7 +260,7 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
 
                 Class[] parameterTypes = m.getParameterTypes();
                 for (int i = 0; i < parameterTypes.length; i++) {
-                    if (!parameterTypes[i].isAssignableFrom(argTypes[i])) {
+                    if(!ClassUtils.isAssignable(parameterTypes[i],argTypes[i])){
                         continue outer;
                     }
                 }
@@ -219,6 +270,10 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
             }
 
         }
+        if(bd.getScope()==BeanDefinition.SCOPE_PROTOTYPE){
+            bd.setFactoryMethod(method);
+        }
+
         return method;
     }
 
@@ -234,13 +289,15 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
             } else {
                 Object[] realArgs = getRealValueForConstructorArgs(bd.getConstructorArgs());
                 Method m = determineFactoryMethod(bd,factoryBean.getClass(), realArgs);
-                return m.invoke(factoryBean);
+                return m.invoke(factoryBean,realArgs);
             }
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

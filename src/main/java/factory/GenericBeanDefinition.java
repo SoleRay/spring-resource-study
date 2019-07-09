@@ -1,6 +1,7 @@
 package factory;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.List;
 
 public class GenericBeanDefinition implements BeanDefinition{
@@ -22,6 +23,8 @@ public class GenericBeanDefinition implements BeanDefinition{
     private List<Object> constructorArgs;
 
     private Constructor constructor;
+
+    private Method factoryMethod;
 
     @Override
     public String getBeanName() {
@@ -117,7 +120,18 @@ public class GenericBeanDefinition implements BeanDefinition{
         return constructor;
     }
 
+    @Override
     public void setConstructor(Constructor constructor) {
         this.constructor = constructor;
+    }
+
+    @Override
+    public Method getFactoryMethod() {
+        return factoryMethod;
+    }
+
+    @Override
+    public void setFactoryMethod(Method factoryMethod) {
+        this.factoryMethod = factoryMethod;
     }
 }

@@ -1,9 +1,14 @@
 package factory;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.List;
 
 public interface BeanDefinition {
+
+    String SCOPE_SINGLETON = "SINGLETON";
+
+    String SCOPE_PROTOTYPE = "PROTOTYPE";
 
     String getBeanName();
 
@@ -44,4 +49,8 @@ public interface BeanDefinition {
     Constructor<?> getConstructor();
 
     void setConstructor(Constructor<?> constructor);
+
+    Method getFactoryMethod();
+
+    void setFactoryMethod(Method factoryMethod);
 }
