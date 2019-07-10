@@ -1,14 +1,13 @@
 package factory;
 
+import org.apache.commons.collections4.CollectionUtils;
 import utils.ClassUtils;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
@@ -24,13 +23,13 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
         buildingBeans.set(buildingBeanSet);
     }
 
-    public Object getBean(String beanName) {
+    public Object getBean(String beanName) throws Exception {
 
         return doGetBean(beanName);
 
     }
 
-    private Object doGetBean(String beanName) {
+    private Object doGetBean(String beanName) throws Exception {
         BeanDefinition bd = beanDefinitionMap.get(beanName);
         if (bd == null) {
             return null;
@@ -49,7 +48,7 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
         }
     }
 
-    private Object doCreateBean(BeanDefinition bd) {
+    private Object doCreateBean(BeanDefinition bd) throws Exception {
         Object bean = null;
 
         buildingBeans.get().add(bd.getBeanName());
@@ -67,7 +66,52 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
 
         buildingBeans.get().remove(bd.getBeanName());
 
+        injectDependencies(bd,bean);
+
         return bean;
+    }
+
+    private void injectDependencies(BeanDefinition bd, Object bean) throws Exception {
+
+        if(bean==null|| CollectionUtils.isEmpty(bd.getPropertyValues())){
+            return;
+        }
+
+        List<PropertyValue> propertyValues = bd.getPropertyValues();
+
+        Class beanType = bd.getBeanType();
+
+
+
+        for(PropertyValue pv : propertyValues){
+            Field f = null;
+            try {
+                f = beanType.getDeclaredField(pv.getName());
+            } catch (NoSuchFieldException e) {
+                System.out.println("no such field"+pv.getName());
+                continue;
+            }
+            f.setAccessible(true);
+
+            Object realValue = null;
+
+            Object pvValue = pv.getValue();
+            if (pvValue instanceof BeanReference) {
+                String beanName = ((BeanReference) pvValue).getBeanName();
+
+                realValue = getBean(beanName);
+            } else if (pvValue instanceof Map) {
+            } else if (pvValue instanceof List) {
+            } else {
+                realValue = pvValue;
+            }
+
+            try {
+                f.set(bean,realValue);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 

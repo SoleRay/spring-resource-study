@@ -2,5 +2,5 @@ package factory;
 
 public interface BeanFactory<T> {
 
-    T getBean(String beanName);
+    T getBean(String beanName) throws Exception;
 }

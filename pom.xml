@@ -8,6 +8,13 @@
     <artifactId>spring-resource-study</artifactId>
     <version>1.0</version>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+            <version>4.2</version>
+        </dependency>
+    </dependencies>
     <build>
         <plugins>
 
