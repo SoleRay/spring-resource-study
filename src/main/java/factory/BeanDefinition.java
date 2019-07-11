@@ -10,6 +10,17 @@ public interface BeanDefinition {
 
     String SCOPE_PROTOTYPE = "PROTOTYPE";
 
+    /**
+     * 是否单例
+     */
+    boolean isSingleton();
+
+    /**
+     * 是否原型
+     */
+    boolean isPrototype();
+
+
     String getBeanName();
 
     void setBeanName(String beanName);

@@ -29,6 +29,16 @@ public class GenericBeanDefinition implements BeanDefinition{
     private List<PropertyValue> propertyValues;
 
     @Override
+    public boolean isSingleton() {
+        return BeanDefinition.SCOPE_SINGLETON.equals(this.scope);
+    }
+
+    @Override
+    public boolean isPrototype() {
+        return BeanDefinition.SCOPE_PROTOTYPE.equals(this.scope);
+    }
+
+    @Override
     public String getBeanName() {
         return beanName;
     }

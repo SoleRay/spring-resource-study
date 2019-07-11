@@ -17,7 +17,6 @@ public class FactoryIocTest {
 
         BeanDefinition airBD = new GenericBeanDefinition();
         airBD.setBeanName(airBeanName);
-        airBD.setBeanType("ioc.bean.factory.AirBean");
         airBD.setFactoryBeanName("airBeanFactory");
         airBD.setFactoryMethodName("createAirBean");
 
@@ -28,7 +27,7 @@ public class FactoryIocTest {
         factory.registerBeanDefition(airBeanName,airBD);
         factory.registerBeanDefition(airFactoryBeanName,airFactoryBD);
         AirBean bean = (AirBean) factory.getBean(airBeanName);
-        System.out.println(bean.getAqi());
+        System.out.println(bean.toString());
     }
 
     public static void testArgumentsFactoryBean(DefaultBeanFactory factory) throws Exception {
@@ -38,7 +37,6 @@ public class FactoryIocTest {
 
         BeanDefinition airBD = new GenericBeanDefinition();
         airBD.setBeanName(airBeanName);
-        airBD.setBeanType("ioc.bean.factory.AirBean");
         airBD.setFactoryBeanName("airBeanFactory");
         airBD.setFactoryMethodName("createAirBean");
         List<Object> constructorArgs = new ArrayList<>();
