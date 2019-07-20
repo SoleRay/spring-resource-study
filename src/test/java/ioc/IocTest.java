@@ -9,6 +9,9 @@ import ioc.test.loop.LoopIocTest;
 import ioc.test.method.StaticFactoryMethodIocTest;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 public class IocTest {
 
@@ -28,19 +31,8 @@ public class IocTest {
 //        //循环依赖测试
 //        LoopIocTest.testLoopBean(factory);
 
-        DenpendencyInjectIocTest.testDI(factory);
+//        DenpendencyInjectIocTest.testDI(factory);
 
     }
-
-
-
-
-
-
-
-
-
-
-
 
 }

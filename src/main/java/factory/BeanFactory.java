@@ -1,6 +1,10 @@
 package factory;
 
-public interface BeanFactory<T> {
+import aop.bean.BeanPostProcessor;
 
-    T getBean(String beanName) throws Exception;
+public interface BeanFactory {
+
+    Object getBean(String beanName) throws Exception;
+
+    void registerBeanPostProcessor(BeanPostProcessor processor);
 }

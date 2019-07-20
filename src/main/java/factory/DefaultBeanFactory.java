@@ -1,5 +1,6 @@
 package factory;
 
+import aop.bean.BeanPostProcessor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import utils.ClassUtils;
@@ -18,6 +19,8 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
 
     /**用来判断，创建新对象时是否存在循环依赖：即A的构造参数中有B对象，B的构造参数中又有A对象*/
     private ThreadLocal<Set<String>> buildingBeans = new ThreadLocal<>();
+
+    private List<BeanPostProcessor> beanPostProcessors = Collections.synchronizedList(new ArrayList<>());
 
     public DefaultBeanFactory() {
         HashSet<String> buildingBeanSet = new HashSet<>();
@@ -81,10 +84,19 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
         /**依赖注入*/
         injectDependencies(bd, instance);
 
+        instance = this.applyPostProcessAfterInitialization(instance, bd.getBeanName());
+
         if (bd.isSingleton()) {
             beanMap.put(bd.getBeanName(), instance);
         }
 
+        return instance;
+    }
+
+    private Object applyPostProcessAfterInitialization(Object instance, String beanName) {
+        for (BeanPostProcessor bpp : this.beanPostProcessors) {
+            instance = bpp.postProcessAfterInitialization(instance, beanName);
+        }
         return instance;
     }
 
@@ -344,18 +356,6 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
     public void registerBeanDefition(String beanName, BeanDefinition bd) throws Exception {
         if (beanDefinitionMap.containsKey(beanName)) {
             throw new Exception("bean已经存在");
@@ -371,5 +371,13 @@ public class DefaultBeanFactory implements BeanFactory, BeanDefinitionRegistry {
     @Override
     public boolean containsBeanDefinition(String beanName) {
         return beanDefinitionMap.containsKey(beanName);
+    }
+
+    @Override
+    public void registerBeanPostProcessor(BeanPostProcessor processor) {
+        this.beanPostProcessors.add(processor);
+        if (processor instanceof BeanFactoryAware) {
+            ((BeanFactoryAware) processor).setBeanFactory(this);
+        }
     }
 }

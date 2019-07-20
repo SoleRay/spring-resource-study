@@ -1,7 +1,6 @@
 package utils;
 
-import java.util.IdentityHashMap;
-import java.util.Map;
+import java.util.*;
 
 public class ClassUtils {
 
@@ -47,5 +46,21 @@ public class ClassUtils {
             }
         }
         return false;
+    }
+
+    public static Set<Class<?>> getAllInterfacesForClassAsSet(Class<?> clazz) {
+        if (clazz.isInterface() ) {
+            return Collections.singleton(clazz);
+        }
+        Set<Class<?>> interfaces = new LinkedHashSet<>();
+        Class<?> current = clazz;
+        while (current != null) {
+            Class<?>[] ifcs = current.getInterfaces();
+            for (Class<?> ifc : ifcs) {
+                interfaces.add(ifc);
+            }
+            current = current.getSuperclass();
+        }
+        return interfaces;
     }
 }
