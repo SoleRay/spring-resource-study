@@ -1,6 +1,4 @@
-package factory;
-
-import factory.BeanDefinition;
+package ioc.bean;
 
 public interface BeanDefinitionRegistry {
 

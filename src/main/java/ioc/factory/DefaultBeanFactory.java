@@ -1,6 +1,10 @@
-package factory;
+package ioc.factory;
 
 import aop.bean.BeanPostProcessor;
+import ioc.bean.BeanDefinition;
+import ioc.bean.BeanDefinitionRegistry;
+import ioc.bean.BeanReference;
+import ioc.bean.PropertyValue;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import utils.ClassUtils;

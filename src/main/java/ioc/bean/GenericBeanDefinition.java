@@ -1,10 +1,10 @@
-package factory;
+package ioc.bean;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.List;
 
-public class GenericBeanDefinition implements BeanDefinition{
+public class GenericBeanDefinition implements BeanDefinition {
 
     private String beanName;
 

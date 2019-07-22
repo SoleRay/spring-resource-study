@@ -1,4 +1,4 @@
-package factory;
+package ioc.bean;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;

@@ -1,4 +1,4 @@
-package factory;
+package ioc.factory;
 
 import aop.bean.BeanPostProcessor;
 
